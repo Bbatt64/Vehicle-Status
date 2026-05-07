@@ -113,9 +113,9 @@ export default function Dashboard() {
       </div>
 
       {/* Main panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Active In Field */}
-        <Card className="lg:col-span-1 border border-border">
+        <Card className="lg:col-span-2 border border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
@@ -125,7 +125,7 @@ export default function Dashboard() {
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 max-h-[400px] overflow-y-auto">
+          <CardContent className="space-y-2 max-h-[640px] overflow-y-auto">
             {data.activeInField.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No vehicles in field</p>
             ) : (
