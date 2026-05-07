@@ -13,6 +13,7 @@ interface DashboardData {
     opsSupportName: string;
     outgoingTime: string;
     vehicleStatus?: string;
+    perm24HrPost?: boolean | number;
   }>;
   inShop: Array<{ id: number; name: string; status: string; shopName?: string; dateIn?: string | null; timeIn?: string | null; notes?: string | null; shopLogId?: number | null }>;
   inactive: Array<{ id: number; name: string; status: string }>;
@@ -40,10 +41,20 @@ function timeSince(isoString: string) {
   const now = new Date();
   const then = new Date(isoString);
   const diffMs = now.getTime() - then.getTime();
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
   const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  if (days >= 1) {
+    const remH = hours - days * 24;
+    return `${days}d ${remH}h`;
+  }
   if (hours > 0) return `${hours}h ${mins}m`;
   return `${mins}m`;
+}
+
+function daysSince(isoString: string) {
+  const diffMs = new Date().getTime() - new Date(isoString).getTime();
+  return diffMs / (1000 * 60 * 60 * 24);
 }
 
 export default function Dashboard() {
@@ -129,25 +140,55 @@ export default function Dashboard() {
             {data.activeInField.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No vehicles in field</p>
             ) : (
-              data.activeInField.map((checkout) => (
-                <div
-                  key={checkout.id}
-                  className="flex items-start justify-between p-3 rounded-md bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30"
-                  data-testid={`field-vehicle-${checkout.id}`}
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold font-mono">{checkout.vehicleName}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{checkout.site}</p>
-                    <p className="text-xs text-muted-foreground">{checkout.guardName}</p>
+              data.activeInField.map((checkout) => {
+                const isPerm = !!checkout.perm24HrPost;
+                const isOverdue = isPerm && daysSince(checkout.outgoingTime) > 7;
+                return (
+                  <div
+                    key={checkout.id}
+                    className={
+                      isOverdue
+                        ? "flex items-start justify-between p-3 rounded-md bg-red-100 dark:bg-red-950/40 border-2 border-red-500 animate-pulse"
+                        : "flex items-start justify-between p-3 rounded-md bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30"
+                    }
+                    data-testid={`field-vehicle-${checkout.id}`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-semibold font-mono ${isOverdue ? "text-red-700 dark:text-red-300" : ""}`}>
+                          {checkout.vehicleName}
+                        </p>
+                        {isPerm && (
+                          <Badge
+                            variant="outline"
+                            className={
+                              isOverdue
+                                ? "text-[10px] px-1.5 py-0 h-4 border-red-500 text-red-700 dark:text-red-300"
+                                : "text-[10px] px-1.5 py-0 h-4"
+                            }
+                          >
+                            24HR
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{checkout.site}</p>
+                      <p className="text-xs text-muted-foreground">{checkout.guardName}</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <p className="text-xs text-muted-foreground">{formatTime(checkout.outgoingTime)}</p>
+                      <p
+                        className={
+                          isOverdue
+                            ? "text-xs font-bold text-red-700 dark:text-red-300 mt-0.5"
+                            : "text-xs font-medium text-blue-600 dark:text-blue-400 mt-0.5"
+                        }
+                      >
+                        {timeSince(checkout.outgoingTime)} ago
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0 ml-2">
-                    <p className="text-xs text-muted-foreground">{formatTime(checkout.outgoingTime)}</p>
-                    <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mt-0.5">
-                      {timeSince(checkout.outgoingTime)} ago
-                    </p>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </CardContent>
         </Card>
