@@ -8,7 +8,7 @@ services:
     plan: starter            # $7/mo. Free plan also works but spins down after 15 min idle.
     region: oregon           # change to ohio / frankfurt / singapore as you like
     branch: main
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: node dist/index.cjs
     healthCheckPath: /api/health
     autoDeploy: true
@@ -17,6 +17,9 @@ services:
       mountPath: /var/data
       sizeGB: 1
     envVars:
+      # Ensure devDependencies (tsx, esbuild, vite, tailwind) install during build
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
       - key: NODE_ENV
         value: production
       - key: PORT
